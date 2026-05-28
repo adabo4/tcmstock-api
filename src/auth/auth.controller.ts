@@ -5,13 +5,7 @@ import { LoginDto } from './dto/login.dto';
 import { Get, Req, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Request } from 'express';
-
-type AuthenticatedRequest = Request & {
-  user: {
-    userId: number;
-    email: string;
-  };
-};
+import type { AuthenticatedRequest } from 'src/types/authenticated-request';
 
 @Controller('auth')
 export class AuthController {

@@ -1,0 +1,13 @@
+import { IsInt, IsString, Min } from 'class-validator';
+
+export class CreateTabletDto {
+  @IsString()
+  name: string;
+
+  @IsString()
+  code: string;
+
+  @IsInt()
+  @Min(0)
+  quantity: number;
+}
