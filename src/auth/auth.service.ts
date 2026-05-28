@@ -16,11 +16,13 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 import { randomBytes } from 'crypto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { MailService } from 'src/mail/mail.service';
 @Injectable()
 export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
+    private readonly mailService: MailService,
   ) {}
 
   async register(dto: RegisterDto) {
@@ -147,9 +149,15 @@ export class AuthService {
       },
     });
 
+    // return {
+    //   message: 'Password reset token created',
+    //   resetToken: token, // len počas developmentu
+    // };
+
+    await this.mailService.sendPasswordResetEmail(user.email, token);
+
     return {
-      message: 'Password reset token created',
-      resetToken: token, // len počas developmentu
+      message: 'Password reset email sent',
     };
   }
 
