@@ -1,11 +1,8 @@
-import { IsInt, IsString, Min } from 'class-validator';
+import { IsInt, Min } from 'class-validator';
 
 export class CreateTabletDto {
-  @IsString()
-  name: string;
-
-  @IsString()
-  code: string;
+  @IsInt()
+  tabletCatalogId: number;
 
   @IsInt()
   @Min(0)
