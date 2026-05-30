@@ -6,6 +6,7 @@ import {
   Req,
   UseGuards,
   Post,
+  Delete,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
@@ -54,5 +55,11 @@ export class AuthController {
   @Post('reset-password')
   resetPassword(@Body() dto: ResetPasswordDto) {
     return this.authService.resetPassword(dto);
+  }
+
+  @Delete('me')
+  @UseGuards(AuthGuard('jwt'))
+  deleteMe(@Req() req: AuthenticatedRequest) {
+    return this.authService.deleteUser(req.user.userId);
   }
 }
