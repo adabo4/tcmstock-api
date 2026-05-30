@@ -16,6 +16,7 @@ import { TabletsService } from './tablets.service';
 import { CreateTabletDto } from './dto/create-tablet.dto';
 import { UpdateTabletDto } from './dto/update-tablet.dto';
 import type { AuthenticatedRequest } from '../types/authenticated-request';
+import { ProductType } from '@prisma/client';
 
 @Controller('tablets')
 @UseGuards(AuthGuard('jwt'))
@@ -23,8 +24,11 @@ export class TabletsController {
   constructor(private readonly tabletsService: TabletsService) {}
 
   @Get('catalog')
-  findCatalog(@Query('search') search?: string) {
-    return this.tabletsService.findCatalog(search);
+  findCatalog(
+    @Query('search') search?: string,
+    @Query('type') type?: ProductType,
+  ) {
+    return this.tabletsService.findCatalog(search, type);
   }
 
   @Get('my')

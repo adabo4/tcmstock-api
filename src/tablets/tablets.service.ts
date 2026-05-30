@@ -6,13 +6,14 @@ import {
 import { PrismaService } from 'prisma/prisma.service';
 import { CreateTabletDto } from './dto/create-tablet.dto';
 import { UpdateTabletDto } from './dto/update-tablet.dto';
+import { ProductType } from '@prisma/client';
 
 @Injectable()
 export class TabletsService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async findCatalog(search?: string) {
-    if (!search) {
+  async findCatalog(search?: string, type?: ProductType) {
+    if (!search && !type) {
       return this.prisma.tabletCatalog.findMany({
         orderBy: {
           code: 'asc',
@@ -24,9 +25,12 @@ export class TabletsService {
     SELECT *
     FROM tablet_catalog
     WHERE
-      unaccent(lower(name)) LIKE unaccent(lower(${`%${search}%`}))
-      OR
-      code LIKE ${`%${search}%`}
+(${search}::text IS NULL OR (
+        unaccent(lower(name)) LIKE unaccent(lower(${`%${search ?? ''}%`}))
+        OR code LIKE ${`%${search ?? ''}%`}
+      ))
+      AND
+      (${type}::"ProductType" IS NULL OR "productType" = ${type}::"ProductType")
     ORDER BY code ASC
   `;
   }
