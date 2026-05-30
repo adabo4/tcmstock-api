@@ -16,7 +16,7 @@ model User {
   id           Int      @id @default(autoincrement())
   email        String   @unique
   passwordHash String
-  tablets      Tablet[]
+  tabletStocks        UserTabletStock[]
 
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -26,21 +26,31 @@ model User {
   @@map("users")
 }
 
-model Tablet {
-  id        Int    @id @default(autoincrement())
-  name      String
-  code      String
-  quantity  Int    @default(0)
+model TabletCatalog {
+  id   Int    @id @default(autoincrement())
+  code String @unique
+  name String
 
-  userId    Int
-  user      User   @relation(fields: [userId], references: [id])
+  userStocks UserTabletStock[]
+
+  @@map("tablet_catalog")
+}
+
+model UserTabletStock {
+  id       Int @id @default(autoincrement())
+  quantity Int @default(0)
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  tabletCatalogId Int
+  tabletCatalog   TabletCatalog @relation(fields: [tabletCatalogId], references: [id])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([userId, code])
-
-  @@map("tablets")
+  @@unique([userId, tabletCatalogId])
+  @@map("user_tablet_stocks")
 }
 
 model PasswordResetToken {
