@@ -30,7 +30,7 @@ model TabletCatalog {
   id   Int    @id @default(autoincrement())
   code String @unique
   name String
- productType ProductType @default(TABLET)
+  productType ProductType @default(TABLET)
 
   userStocks UserTabletStock[]
 
@@ -40,6 +40,8 @@ model TabletCatalog {
 model UserTabletStock {
   id       Int @id @default(autoincrement())
   quantity Int @default(0)
+
+  packageState PackageState @default(FULL)
 
   userId Int
   user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -77,4 +79,10 @@ enum ProductType {
   CELL_SALT
   CREAM
   SUPPOSITORY
+}
+
+
+enum PackageState {
+  FULL
+  OPENED
 }

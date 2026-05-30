@@ -74,6 +74,7 @@ export class TabletsService {
         userId,
         tabletCatalogId: dto.tabletCatalogId,
         quantity: dto.quantity,
+        packageState: dto.packageState,
       },
       include: {
         tabletCatalog: true,
@@ -97,6 +98,7 @@ export class TabletsService {
       where: { id },
       data: {
         quantity: dto.quantity,
+        packageState: dto.packageState,
       },
       include: {
         tabletCatalog: true,

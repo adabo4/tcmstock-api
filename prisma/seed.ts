@@ -11,7 +11,21 @@ if (!connectionString) {
 const adapter = new PrismaPg({ connectionString });
 const prisma = new PrismaClient({ adapter });
 
-const tablets = [
+type SeedTablet = {
+  code: string;
+  name: string;
+  productType:
+    | 'TABLET'
+    | 'DRINK'
+    | 'BOOK'
+    | 'OIL'
+    | 'SYRUP'
+    | 'CELL_SALT'
+    | 'CREAM'
+    | 'SUPPOSITORY';
+};
+
+const tablets: SeedTablet[] = [
   // TABLETY
   { code: '001', name: 'Kúzlo prvej pomoci', productType: 'TABLET' },
   { code: '002', name: 'Chlad rannej hmly', productType: 'TABLET' },
@@ -173,8 +187,15 @@ async function main() {
   for (const tablet of tablets) {
     await prisma.tabletCatalog.upsert({
       where: { code: tablet.code },
-      update: { name: tablet.name },
-      create: tablet,
+      update: {
+        name: tablet.name,
+        productType: tablet.productType,
+      },
+      create: {
+        code: tablet.code,
+        name: tablet.name,
+        productType: tablet.productType,
+      },
     });
   }
 
