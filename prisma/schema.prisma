@@ -30,6 +30,7 @@ model TabletCatalog {
   id   Int    @id @default(autoincrement())
   code String @unique
   name String
+ productType ProductType @default(TABLET)
 
   userStocks UserTabletStock[]
 
@@ -65,4 +66,15 @@ model PasswordResetToken {
   createdAt DateTime @default(now())
 
   @@map("password_reset_tokens")
+}
+
+enum ProductType {
+  TABLET
+  DRINK
+  BOOK
+  OIL
+  SYRUP
+  CELL_SALT
+  CREAM
+  SUPPOSITORY
 }
