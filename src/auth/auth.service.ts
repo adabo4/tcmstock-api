@@ -48,11 +48,20 @@ export class AuthService {
       select: {
         id: true,
         email: true,
+        name: true,
         createdAt: true,
       },
     });
 
+    const payload = {
+      sub: user.id,
+      email: user.email,
+    };
+
+    const accessToken = await this.jwtService.signAsync(payload);
+
     return {
+      accessToken,
       message: 'User created successfully',
       user,
     };
@@ -86,10 +95,12 @@ export class AuthService {
     const accessToken = await this.jwtService.signAsync(payload);
 
     return {
+      message: 'User logged in successfully',
       accessToken,
       user: {
         id: user.id,
         email: user.email,
+        name: user.name,
       },
     };
   }
