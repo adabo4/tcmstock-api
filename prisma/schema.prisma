@@ -39,19 +39,18 @@ model TabletCatalog {
 }
 
 model UserTabletStock {
-  id       Int @id @default(autoincrement())
-  quantity Int @default(0)
-
-  packageState PackageState @default(FULL)
-
-  userId Int
-  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
+  id              Int      @id @default(autoincrement())
+  userId          Int
   tabletCatalogId Int
-  tabletCatalog   TabletCatalog @relation(fields: [tabletCatalogId], references: [id])
+
+  fullQuantity    Int      @default(0)
+  openedQuantity  Int      @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  user            User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tabletCatalog   TabletCatalog @relation(fields: [tabletCatalogId], references: [id])
 
   @@unique([userId, tabletCatalogId])
   @@map("user_tablet_stocks")
@@ -80,10 +79,4 @@ enum ProductType {
   CELL_SALT
   CREAM
   SUPPOSITORY
-}
-
-
-enum PackageState {
-  FULL
-  OPENED
 }

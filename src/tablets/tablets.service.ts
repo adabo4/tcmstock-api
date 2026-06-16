@@ -22,17 +22,17 @@ export class TabletsService {
     }
 
     return this.prisma.$queryRaw`
-    SELECT *
-    FROM tablet_catalog
-    WHERE
-(${search}::text IS NULL OR (
-        unaccent(lower(name)) LIKE unaccent(lower(${`%${search ?? ''}%`}))
-        OR code LIKE ${`%${search ?? ''}%`}
-      ))
-      AND
-      (${type}::"ProductType" IS NULL OR "productType" = ${type}::"ProductType")
-    ORDER BY code ASC
-  `;
+      SELECT *
+      FROM tablet_catalog
+      WHERE
+  (${search}::text IS NULL OR (
+          unaccent(lower(name)) LIKE unaccent(lower(${`%${search ?? ''}%`}))
+          OR code LIKE ${`%${search ?? ''}%`}
+        ))
+        AND
+        (${type}::"ProductType" IS NULL OR "productType" = ${type}::"ProductType")
+      ORDER BY code ASC
+    `;
   }
 
   findMyStock(userId: number) {
@@ -42,9 +42,7 @@ export class TabletsService {
         tabletCatalog: true,
       },
       orderBy: {
-        tabletCatalog: {
-          code: 'asc',
-        },
+        createdAt: 'desc',
       },
     });
   }
@@ -77,8 +75,8 @@ export class TabletsService {
       data: {
         userId,
         tabletCatalogId: dto.tabletCatalogId,
-        quantity: dto.quantity,
-        packageState: dto.packageState,
+        fullQuantity: dto.fullQuantity,
+        openedQuantity: dto.openedQuantity,
       },
       include: {
         tabletCatalog: true,
@@ -101,8 +99,8 @@ export class TabletsService {
     return this.prisma.userTabletStock.update({
       where: { id },
       data: {
-        quantity: dto.quantity,
-        packageState: dto.packageState,
+        fullQuantity: dto.fullQuantity,
+        openedQuantity: dto.openedQuantity,
       },
       include: {
         tabletCatalog: true,

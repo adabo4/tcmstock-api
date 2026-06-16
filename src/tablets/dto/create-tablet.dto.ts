@@ -1,18 +1,14 @@
-import { IsEnum, IsInt, Min } from 'class-validator';
-
-export enum PackageState {
-  FULL = 'FULL',
-  OPENED = 'OPENED',
-}
+import { IsInt, Min } from 'class-validator';
 
 export class CreateTabletDto {
   @IsInt()
-  tabletCatalogId: number;
+  tabletCatalogId!: number;
 
   @IsInt()
   @Min(0)
-  quantity: number;
+  fullQuantity!: number;
 
-  @IsEnum(PackageState)
-  packageState: PackageState;
+  @IsInt()
+  @Min(0)
+  openedQuantity!: number;
 }

@@ -1,13 +1,13 @@
-import { IsEnum, IsInt, IsOptional, Min } from 'class-validator';
-import { PackageState } from './create-tablet.dto';
+import { IsInt, IsOptional, Min } from 'class-validator';
 
 export class UpdateTabletDto {
   @IsOptional()
   @IsInt()
   @Min(0)
-  quantity?: number;
+  fullQuantity?: number;
 
   @IsOptional()
-  @IsEnum(PackageState)
-  packageState?: PackageState;
+  @IsInt()
+  @Min(0)
+  openedQuantity?: number;
 }
