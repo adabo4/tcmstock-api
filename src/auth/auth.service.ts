@@ -18,6 +18,7 @@ import { randomBytes } from 'crypto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { MailService } from 'src/mail/mail.service';
+import { UpdateNameDto } from './dto/change-name.dto';
 @Injectable()
 export class AuthService {
   constructor(
@@ -134,6 +135,24 @@ export class AuthService {
 
     return {
       message: 'Password changed successfully',
+    };
+  }
+
+  async updateName(userId: number, dto: UpdateNameDto) {
+    const user = await this.prisma.user.update({
+      where: { id: userId },
+      data: { name: dto.name },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        createdAt: true,
+      },
+    });
+
+    return {
+      message: 'Name updated successfully',
+      user,
     };
   }
 

@@ -17,6 +17,7 @@ import type { AuthenticatedRequest } from 'src/types/authenticated-request';
 import { ChangePasswordDto } from './dto/change-password.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
+import { UpdateNameDto } from './dto/change-name.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -45,6 +46,12 @@ export class AuthController {
     @Body() dto: ChangePasswordDto,
   ) {
     return this.authService.changePassword(req.user.userId, dto);
+  }
+
+  @Patch('me/name')
+  @UseGuards(AuthGuard('jwt'))
+  updateName(@Req() req: AuthenticatedRequest, @Body() dto: UpdateNameDto) {
+    return this.authService.updateName(req.user.userId, dto);
   }
 
   @Post('forgot-password')
