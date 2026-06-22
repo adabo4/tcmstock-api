@@ -18,6 +18,7 @@ import { ChangePasswordDto } from './dto/change-password.dto';
 import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { UpdateNameDto } from './dto/change-name.dto';
+import { VerifyEmailDTO } from './dto/verify-email.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -37,6 +38,11 @@ export class AuthController {
   @Post('login')
   login(@Body() dto: LoginDto) {
     return this.authService.login(dto);
+  }
+
+  @Post('verify-email')
+  verifyEmail(@Body() dto: VerifyEmailDTO) {
+    return this.authService.verifyEmail(dto);
   }
 
   @Patch('change-password')

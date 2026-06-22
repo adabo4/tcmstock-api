@@ -11,7 +11,7 @@ export class MailService {
     const resetLink = `${frontendUrl}/reset-password?token=${token}`;
 
     await this.resend.emails.send({
-      from: 'onboarding@resend.dev',
+      from: 'noreply@tcm-api.mail.flights.home.sk',
       to: email,
       subject: 'Reset your password',
       html: `
@@ -20,5 +20,24 @@ export class MailService {
       <p>This link expires in 30 minutes.</p>
     `,
     });
+  }
+
+  async sendVerificationEmail(email: string, code: string) {
+    console.log('Sending verification email to:', email);
+    const result = await this.resend.emails.send({
+      from: 'noreply@tcm-api.mail.flights.home.sk',
+      to: email,
+      subject: 'Verify your account',
+      html: `
+       <h2>Welcome to TCM Stock</h2>
+
+      <p>Your verification code is:</p>
+
+      <h1>${code}</h1>
+
+      <p>This code expires in 15 minutes.</p>
+    `,
+    });
+    console.log(result);
   }
 }

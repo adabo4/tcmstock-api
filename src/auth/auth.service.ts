@@ -19,6 +19,7 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { MailService } from 'src/mail/mail.service';
 import { UpdateNameDto } from './dto/change-name.dto';
+import { VerifyEmailDTO } from './dto/verify-email.dto';
 @Injectable()
 export class AuthService {
   constructor(
@@ -34,8 +35,34 @@ export class AuthService {
       },
     });
 
-    if (existingUser) {
+    if (existingUser && existingUser.isVerified) {
       throw new BadRequestException('User already exists');
+    }
+
+    if (existingUser && !existingUser.isVerified) {
+      const code = this.generateVerificationCode();
+
+      await this.prisma.verificationCode.upsert({
+        where: {
+          userId: existingUser.id,
+        },
+        update: {
+          code,
+          expiresAt: new Date(Date.now() + 15 * 60 * 1000),
+        },
+        create: {
+          code,
+          userId: existingUser.id,
+          expiresAt: new Date(Date.now() + 15 * 60 * 1000),
+        },
+      });
+
+      await this.mailService.sendVerificationEmail(existingUser.email, code);
+
+      return {
+        message: 'Verification code sent again',
+        email: existingUser.email,
+      };
     }
 
     const passwordHash = await bcrypt.hash(dto.password, 10);
@@ -54,20 +81,23 @@ export class AuthService {
       },
     });
 
-    const payload = {
-      sub: user.id,
-      email: user.email,
-    };
+    const code = this.generateVerificationCode();
 
-    const accessToken = await this.jwtService.signAsync(payload);
+    await this.prisma.verificationCode.create({
+      data: {
+        code,
+        userId: user.id,
+        expiresAt: new Date(Date.now() + 15 * 60 * 1000),
+      },
+    });
+
+    await this.mailService.sendVerificationEmail(user.email, code);
 
     return {
-      accessToken,
-      message: 'User created successfully',
-      user,
+      message: 'Verification code sent',
+      email: user.email,
     };
   }
-
   async login(dto: LoginDto) {
     const user = await this.prisma.user.findUnique({
       where: {
@@ -77,6 +107,10 @@ export class AuthService {
 
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
+    }
+
+    if (!user.isVerified) {
+      throw new UnauthorizedException('Please verify your email first');
     }
 
     const isPasswordValid = await bcrypt.compare(
@@ -220,6 +254,57 @@ export class AuthService {
     };
   }
 
+  async verifyEmail(dto: VerifyEmailDTO) {
+    const user = await this.prisma.user.findUnique({
+      where: { email: dto.email },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    const verification = await this.prisma.verificationCode.findUnique({
+      where: { userId: user.id },
+    });
+
+    if (!verification) {
+      throw new BadRequestException('Verification code not found');
+    }
+
+    if (verification.code !== dto.code) {
+      throw new BadRequestException('Invalid verification code');
+    }
+
+    if (verification.expiresAt < new Date()) {
+      throw new BadRequestException('Verification code expired');
+    }
+    const verifiedUser = await this.prisma.user.update({
+      where: { id: user.id },
+      data: { isVerified: true },
+    });
+
+    await this.prisma.verificationCode.delete({
+      where: { userId: user.id },
+    });
+
+    const payload = {
+      sub: verifiedUser.id,
+      email: verifiedUser.email,
+    };
+
+    const accessToken = await this.jwtService.signAsync(payload);
+
+    return {
+      message: 'Email verified successfully',
+      accessToken,
+      user: {
+        id: verifiedUser.id,
+        email: verifiedUser.email,
+        name: verifiedUser.name,
+      },
+    };
+  }
+
   async deleteUser(userId: number) {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
 
@@ -236,5 +321,9 @@ export class AuthService {
     return {
       message: 'User deleted.',
     };
+  }
+
+  private generateVerificationCode() {
+    return Math.floor(100000 + Math.random() * 900000).toString();
   }
 }
