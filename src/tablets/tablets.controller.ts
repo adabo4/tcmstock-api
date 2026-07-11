@@ -16,24 +16,33 @@ import { TabletsService } from './tablets.service';
 import { CreateTabletDto } from './dto/create-tablet.dto';
 import { UpdateTabletDto } from './dto/update-tablet.dto';
 import type { AuthenticatedRequest } from '../types/authenticated-request';
-import { ProductType } from '@prisma/client';
+import { CatalogQueryDto } from './dto/catalog-query.dto';
+import { MyStockQueryDto } from './dto/my-stock-query-dto';
 
 @Controller('tablets')
 @UseGuards(AuthGuard('jwt'))
 export class TabletsController {
   constructor(private readonly tabletsService: TabletsService) {}
 
-  @Get('catalog')
-  findCatalog(
-    @Query('search') search?: string,
-    @Query('type') type?: ProductType,
-  ) {
-    return this.tabletsService.findCatalog(search, type);
-  }
+  // @Get('catalog')
+  // findCatalog(
+  //   @Query('search') search?: string,
+  //   @Query('type') type?: ProductType,
+  // ) {
+  //   return this.tabletsService.findCatalog(search, type);
+  // }
 
   @Get('my')
-  findMyStock(@Req() req: AuthenticatedRequest) {
-    return this.tabletsService.findMyStock(req.user.userId);
+  findMyStock(
+    @Req() req: AuthenticatedRequest,
+    @Query() query: MyStockQueryDto,
+  ) {
+    return this.tabletsService.findMyStock(req.user.userId, query);
+  }
+
+  @Get('catalog')
+  getCatalog(@Query() query: CatalogQueryDto) {
+    return this.tabletsService.getCatalog(query);
   }
 
   @Post('my')
