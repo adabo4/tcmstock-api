@@ -137,7 +137,22 @@ export class TabletsService {
     });
 
     if (existingStock) {
-      throw new BadRequestException('Tablet is already in your stock');
+      return this.prisma.userTabletStock.update({
+        where: {
+          id: existingStock.id,
+        },
+        data: {
+          fullQuantity: {
+            increment: dto.fullQuantity,
+          },
+          openedQuantity: {
+            increment: dto.openedQuantity,
+          },
+        },
+        include: {
+          tabletCatalog: true,
+        },
+      });
     }
 
     return this.prisma.userTabletStock.create({
