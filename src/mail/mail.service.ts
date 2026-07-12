@@ -40,4 +40,21 @@ export class MailService {
     });
     console.log(result);
   }
+
+  async sendPasswordChangedEmail(email: string) {
+    await this.resend.emails.send({
+      from: 'noreply@tcm-api.mail.flights.home.sk',
+      to: email,
+      subject: 'Your password has been changed',
+      html: `
+      <h2>Password changed successfully</h2>
+
+      <p>Your TCM Stock account password has been changed.</p>
+
+      <p>If you made this change, no further action is required.</p>
+
+      <p><strong>If you did not change your password, please reset it immediately or contact support.</strong></p>
+    `,
+    });
+  }
 }

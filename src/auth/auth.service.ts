@@ -167,6 +167,12 @@ export class AuthService {
       },
     });
 
+    try {
+      await this.mailService.sendPasswordChangedEmail(user.email);
+    } catch (error) {
+      console.error('Failed to send password changed email', error);
+    }
+
     return {
       message: 'Password changed successfully',
     };
