@@ -19,6 +19,7 @@ import { ForgotPasswordDto } from './dto/forgot-password.dto';
 import { ResetPasswordDto } from './dto/reset-password.dto';
 import { UpdateNameDto } from './dto/change-name.dto';
 import { VerifyEmailDTO } from './dto/verify-email.dto';
+import { ResendVerificationCodeDto } from './dto/resend-verification-code.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -43,6 +44,11 @@ export class AuthController {
   @Post('verify-email')
   verifyEmail(@Body() dto: VerifyEmailDTO) {
     return this.authService.verifyEmail(dto);
+  }
+
+  @Post('resend-verification-code')
+  resendVerificationCode(@Body() dto: ResendVerificationCodeDto) {
+    return this.authService.resendVerificationCode(dto.email);
   }
 
   @Patch('change-password')

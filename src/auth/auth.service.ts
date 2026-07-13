@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -29,9 +30,10 @@ export class AuthService {
   ) {}
 
   async register(dto: RegisterDto) {
+    const normalizedEmail = dto.email.trim().toLowerCase();
     const existingUser = await this.prisma.user.findUnique({
       where: {
-        email: dto.email,
+        email: normalizedEmail,
       },
     });
 
@@ -65,13 +67,13 @@ export class AuthService {
       };
     }
 
-    const passwordHash = await bcrypt.hash(dto.password, 10);
+    const passwordHash = await bcrypt.hash(dto.password.trim(), 10);
 
     const user = await this.prisma.user.create({
       data: {
-        email: dto.email,
+        email: normalizedEmail,
         passwordHash,
-        name: dto.name,
+        name: dto.name.trim(),
       },
       select: {
         id: true,
@@ -98,19 +100,59 @@ export class AuthService {
       email: user.email,
     };
   }
+  // async login(dto: LoginDto) {
+  //   const user = await this.prisma.user.findUnique({
+  //     where: {
+  //       email: dto.email,
+  //     },
+  //   });
+
+  //   if (!user) {
+  //     throw new UnauthorizedException('Invalid credentials');
+  //   }
+
+  //   if (!user.isVerified) {
+  //     throw new UnauthorizedException('Please verify your email first');
+  //   }
+
+  //   const isPasswordValid = await bcrypt.compare(
+  //     dto.password,
+  //     user.passwordHash,
+  //   );
+
+  //   if (!isPasswordValid) {
+  //     throw new UnauthorizedException('Invalid credentials');
+  //   }
+
+  //   const payload = {
+  //     sub: user.id,
+  //     email: user.email,
+  //   };
+
+  //   const accessToken = await this.jwtService.signAsync(payload);
+
+  //   return {
+  //     message: 'User logged in successfully',
+  //     accessToken,
+  //     user: {
+  //       id: user.id,
+  //       email: user.email,
+  //       name: user.name,
+  //     },
+  //   };
+  // }
+
   async login(dto: LoginDto) {
+    const normalizedEmail = dto.email.trim().toLowerCase();
+
     const user = await this.prisma.user.findUnique({
       where: {
-        email: dto.email,
+        email: normalizedEmail,
       },
     });
 
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
-    }
-
-    if (!user.isVerified) {
-      throw new UnauthorizedException('Please verify your email first');
     }
 
     const isPasswordValid = await bcrypt.compare(
@@ -120,6 +162,14 @@ export class AuthService {
 
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
+    }
+
+    if (!user.isVerified) {
+      throw new ForbiddenException({
+        message: 'Your email is not verified.',
+        code: 'EMAIL_NOT_VERIFIED',
+        email: user.email,
+      });
     }
 
     const payload = {
@@ -308,6 +358,48 @@ export class AuthService {
         email: verifiedUser.email,
         name: verifiedUser.name,
       },
+    };
+  }
+
+  async resendVerificationCode(email: string) {
+    const normalizedEmail = email.trim().toLowerCase();
+
+    const user = await this.prisma.user.findUnique({
+      where: {
+        email: normalizedEmail,
+      },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (user.isVerified) {
+      throw new BadRequestException('Email is already verified');
+    }
+
+    const code = this.generateVerificationCode();
+
+    await this.prisma.verificationCode.upsert({
+      where: {
+        userId: user.id,
+      },
+      update: {
+        code,
+        expiresAt: new Date(Date.now() + 15 * 60 * 1000),
+      },
+      create: {
+        userId: user.id,
+        code,
+        expiresAt: new Date(Date.now() + 15 * 60 * 1000),
+      },
+    });
+
+    await this.mailService.sendVerificationEmail(user.email, code);
+
+    return {
+      message: 'A new verification code has been sent.',
+      email: user.email,
     };
   }
 
