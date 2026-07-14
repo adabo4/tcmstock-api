@@ -23,4 +23,9 @@ export class CatalogQueryDto {
   @Min(1)
   @Max(100)
   limit = 15;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  stockLocationId?: number;
 }

@@ -12,11 +12,13 @@ datasource db {
 }
 
 model User {
-  id           Int               @id @default(autoincrement())
+  id           Int    @id @default(autoincrement())
   name         String?
-  email        String            @unique
+  email        String @unique
   passwordHash String
-  tabletStocks UserTabletStock[]
+
+  tabletStocks  UserTabletStock[]
+  stockLocations StockLocation[]
 
   isVerified Boolean @default(false)
 
@@ -28,6 +30,24 @@ model User {
   passwordResetTokens PasswordResetToken[]
 
   @@map("users")
+}
+
+model StockLocation {
+  id        Int     @id @default(autoincrement())
+  name      String
+  isDefault Boolean @default(false)
+
+  userId Int
+  user   User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  tabletStocks UserTabletStock[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, name])
+  @@index([userId])
+  @@map("stock_locations")
 }
 
 model TabletCatalog {
@@ -45,6 +65,7 @@ model UserTabletStock {
   id              Int @id @default(autoincrement())
   userId          Int
   tabletCatalogId Int
+  stockLocationId Int
 
   fullQuantity   Int @default(0)
   openedQuantity Int @default(0)
@@ -54,8 +75,10 @@ model UserTabletStock {
 
   user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   tabletCatalog TabletCatalog @relation(fields: [tabletCatalogId], references: [id])
+  stockLocation StockLocation @relation(fields: [stockLocationId], references: [id], onDelete: Cascade)
 
-  @@unique([userId, tabletCatalogId])
+  @@unique([userId, tabletCatalogId, stockLocationId])
+  @@index([stockLocationId])
   @@map("user_tablet_stocks")
 }
 

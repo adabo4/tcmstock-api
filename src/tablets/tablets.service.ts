@@ -112,11 +112,30 @@ export class TabletsService {
       throw new NotFoundException('Catalog tablet not found');
     }
 
+    const stockLocation = dto.stockLocationId
+      ? await this.prisma.stockLocation.findFirst({
+          where: {
+            id: dto.stockLocationId,
+            userId,
+          },
+        })
+      : await this.prisma.stockLocation.findFirst({
+          where: {
+            userId,
+            isDefault: true,
+          },
+        });
+
+    if (!stockLocation) {
+      throw new NotFoundException('Stock location not found');
+    }
+
     const existingStock = await this.prisma.userTabletStock.findUnique({
       where: {
-        userId_tabletCatalogId: {
+        userId_tabletCatalogId_stockLocationId: {
           userId,
           tabletCatalogId: dto.tabletCatalogId,
+          stockLocationId: stockLocation.id,
         },
       },
     });
@@ -136,6 +155,7 @@ export class TabletsService {
         },
         include: {
           tabletCatalog: true,
+          stockLocation: true,
         },
       });
     }
@@ -144,11 +164,13 @@ export class TabletsService {
       data: {
         userId,
         tabletCatalogId: dto.tabletCatalogId,
+        stockLocationId: stockLocation.id,
         fullQuantity: dto.fullQuantity,
         openedQuantity: dto.openedQuantity,
       },
       include: {
         tabletCatalog: true,
+        stockLocation: true,
       },
     });
   }
@@ -166,13 +188,16 @@ export class TabletsService {
     }
 
     return this.prisma.userTabletStock.update({
-      where: { id },
+      where: {
+        id: stockItem.id,
+      },
       data: {
         fullQuantity: dto.fullQuantity,
         openedQuantity: dto.openedQuantity,
       },
       include: {
         tabletCatalog: true,
+        stockLocation: true,
       },
     });
   }
@@ -326,6 +351,24 @@ export class TabletsService {
     const limit = query.limit;
     const offset = (page - 1) * limit;
 
+    const stockLocation = query.stockLocationId
+      ? await this.prisma.stockLocation.findFirst({
+          where: {
+            id: query.stockLocationId,
+            userId,
+          },
+        })
+      : await this.prisma.stockLocation.findFirst({
+          where: {
+            userId,
+            isDefault: true,
+          },
+        });
+
+    if (!stockLocation) {
+      throw new NotFoundException('Stock location not found');
+    }
+
     const items = await this.prisma.$queryRaw<
       Array<{
         id: number;
@@ -361,7 +404,8 @@ export class TabletsService {
     INNER JOIN tablet_catalog tc
       ON tc.id = uts."tabletCatalogId"
     WHERE
-      uts."userId" = ${userId}
+       uts."userId" = ${userId}
+       AND uts."stockLocationId" = ${stockLocation.id}
       AND (
         ${search}::text IS NULL
         OR unaccent(lower(tc.name))
@@ -384,7 +428,8 @@ export class TabletsService {
     INNER JOIN tablet_catalog tc
       ON tc.id = uts."tabletCatalogId"
     WHERE
-      uts."userId" = ${userId}
+       uts."userId" = ${userId}
+      AND uts."stockLocationId" = ${stockLocation.id}
       AND (
         ${search}::text IS NULL
         OR unaccent(lower(tc.name))
