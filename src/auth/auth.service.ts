@@ -31,6 +31,7 @@ export class AuthService {
 
   async register(dto: RegisterDto) {
     const normalizedEmail = dto.email.trim().toLowerCase();
+
     const existingUser = await this.prisma.user.findUnique({
       where: {
         email: normalizedEmail,
@@ -41,22 +42,45 @@ export class AuthService {
       throw new BadRequestException('User already exists');
     }
 
+    if (existingUser && existingUser.isVerified) {
+      throw new BadRequestException('User already exists');
+    }
+
     if (existingUser && !existingUser.isVerified) {
       const code = this.generateVerificationCode();
+      const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
 
-      await this.prisma.verificationCode.upsert({
-        where: {
-          userId: existingUser.id,
-        },
-        update: {
-          code,
-          expiresAt: new Date(Date.now() + 15 * 60 * 1000),
-        },
-        create: {
-          code,
-          userId: existingUser.id,
-          expiresAt: new Date(Date.now() + 15 * 60 * 1000),
-        },
+      await this.prisma.$transaction(async (tx) => {
+        const stockLocation = await tx.stockLocation.findFirst({
+          where: {
+            userId: existingUser.id,
+          },
+        });
+
+        if (!stockLocation) {
+          await tx.stockLocation.create({
+            data: {
+              name: 'Hlavný sklad',
+              isDefault: true,
+              userId: existingUser.id,
+            },
+          });
+        }
+
+        await tx.verificationCode.upsert({
+          where: {
+            userId: existingUser.id,
+          },
+          update: {
+            code,
+            expiresAt,
+          },
+          create: {
+            code,
+            userId: existingUser.id,
+            expiresAt,
+          },
+        });
       });
 
       await this.mailService.sendVerificationEmail(existingUser.email, code);
@@ -68,29 +92,41 @@ export class AuthService {
     }
 
     const passwordHash = await bcrypt.hash(dto.password.trim(), 10);
-
-    const user = await this.prisma.user.create({
-      data: {
-        email: normalizedEmail,
-        passwordHash,
-        name: dto.name.trim(),
-      },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        createdAt: true,
-      },
-    });
-
     const code = this.generateVerificationCode();
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
 
-    await this.prisma.verificationCode.create({
-      data: {
-        code,
-        userId: user.id,
-        expiresAt: new Date(Date.now() + 15 * 60 * 1000),
-      },
+    const user = await this.prisma.$transaction(async (tx) => {
+      const createdUser = await tx.user.create({
+        data: {
+          email: normalizedEmail,
+          passwordHash,
+          name: dto.name.trim(),
+        },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          createdAt: true,
+        },
+      });
+
+      await tx.stockLocation.create({
+        data: {
+          name: 'Hlavný sklad',
+          isDefault: true,
+          userId: createdUser.id,
+        },
+      });
+
+      await tx.verificationCode.create({
+        data: {
+          code,
+          userId: createdUser.id,
+          expiresAt,
+        },
+      });
+
+      return createdUser;
     });
 
     await this.mailService.sendVerificationEmail(user.email, code);
