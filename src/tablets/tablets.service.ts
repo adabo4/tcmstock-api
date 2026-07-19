@@ -351,6 +351,7 @@ export class TabletsService {
     const page = query.page;
     const limit = query.limit;
     const offset = (page - 1) * limit;
+    const packageStatus = query.packageStatus ?? null;
 
     const stockLocation = query.stockLocationId
       ? await this.prisma.stockLocation.findFirst({
@@ -438,6 +439,19 @@ export class TabletsService {
         AND (uts."fullQuantity" + uts."openedQuantity") < 2
       )
     )
+    AND (
+  ${packageStatus}::text IS NULL
+
+  OR (
+    ${packageStatus}::text = 'OPENED'
+    AND uts."openedQuantity" > 0
+  )
+
+  OR (
+    ${packageStatus}::text = 'CLOSED'
+    AND uts."fullQuantity" > 0
+  )
+)  
 
   ORDER BY tc.code ASC
   LIMIT ${limit}
@@ -476,11 +490,25 @@ export class TabletsService {
         ${status}::text = 'OUT_OF_STOCK'
         AND (uts."fullQuantity" + uts."openedQuantity") = 0
       )
-
+      
       OR (
         ${status}::text = 'LOW_STOCK'
         AND (uts."fullQuantity" + uts."openedQuantity") > 0
         AND (uts."fullQuantity" + uts."openedQuantity") < 2
+      )
+    )
+
+    AND (
+      ${packageStatus}::text IS NULL
+
+      OR (
+        ${packageStatus}::text = 'OPENED'
+        AND uts."openedQuantity" > 0
+      )
+
+      OR (
+        ${packageStatus}::text = 'CLOSED'
+        AND uts."fullQuantity" > 0
       )
     )
 `;

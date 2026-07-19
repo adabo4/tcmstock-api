@@ -9,6 +9,11 @@ export enum StockStatus {
   OUT_OF_STOCK = 'OUT_OF_STOCK',
 }
 
+export enum PackageStatus {
+  OPENED = 'OPENED',
+  CLOSED = 'CLOSED',
+}
+
 export class MyStockQueryDto {
   @IsOptional()
   @IsString()
@@ -39,4 +44,8 @@ export class MyStockQueryDto {
   @IsOptional()
   @IsEnum(StockStatus)
   status?: StockStatus;
+
+  @IsOptional()
+  @IsEnum(PackageStatus)
+  packageStatus?: PackageStatus;
 }
