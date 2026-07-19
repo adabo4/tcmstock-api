@@ -16,7 +16,7 @@ export class MailService {
     await this.resend.emails.send({
       from: 'noreply@tcm-api.mail.flights.home.sk',
       to: email,
-      subject: 'Reset your password',
+      subject: 'Obnovte svoje heslo',
       html: passwordResetTemplate(resetLink),
     });
   }
@@ -26,7 +26,7 @@ export class MailService {
     const result = await this.resend.emails.send({
       from: 'noreply@tcm-api.mail.flights.home.sk',
       to: email,
-      subject: 'Verify your account',
+      subject: 'Overenie účtu pri registrácii',
       html: verificationTemplate(code),
     });
     console.log(result);
@@ -36,7 +36,7 @@ export class MailService {
     await this.resend.emails.send({
       from: 'noreply@tcm-api.mail.flights.home.sk',
       to: email,
-      subject: 'Your password has been changed',
+      subject: 'Vaše heslo bolo zmenené',
       html: passwordChangedTemplate(),
     });
   }

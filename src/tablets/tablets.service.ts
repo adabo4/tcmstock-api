@@ -109,7 +109,7 @@ export class TabletsService {
     });
 
     if (!catalogTablet) {
-      throw new NotFoundException('Catalog tablet not found');
+      throw new NotFoundException('Katalóg produktov nebol nájdený');
     }
 
     const stockLocation = dto.stockLocationId
@@ -127,7 +127,7 @@ export class TabletsService {
         });
 
     if (!stockLocation) {
-      throw new NotFoundException('Stock location not found');
+      throw new NotFoundException('Skladové miesto nebolo nájdené');
     }
 
     const existingStock = await this.prisma.userTabletStock.findUnique({
@@ -184,7 +184,7 @@ export class TabletsService {
     });
 
     if (!stockItem) {
-      throw new NotFoundException('Stock item not found');
+      throw new NotFoundException('Položka skladu nebola nájdená');
     }
 
     return this.prisma.userTabletStock.update({
@@ -211,7 +211,7 @@ export class TabletsService {
     });
 
     if (!stockItem) {
-      throw new NotFoundException('Stock item not found');
+      throw new NotFoundException('Položka skladu nebola nájdená');
     }
 
     await this.prisma.userTabletStock.delete({
@@ -368,7 +368,7 @@ export class TabletsService {
         });
 
     if (!stockLocation) {
-      throw new NotFoundException('Stock location not found');
+      throw new NotFoundException('Skladové miesto nebolo nájdené');
     }
 
     const items = await this.prisma.$queryRaw<

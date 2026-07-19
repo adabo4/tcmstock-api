@@ -39,11 +39,11 @@ export class AuthService {
     });
 
     if (existingUser && existingUser.isVerified) {
-      throw new BadRequestException('User already exists');
+      throw new BadRequestException('Používateľ už existuje');
     }
 
     if (existingUser && existingUser.isVerified) {
-      throw new BadRequestException('User already exists');
+      throw new BadRequestException('Používateľ už existuje');
     }
 
     if (existingUser && !existingUser.isVerified) {
@@ -86,7 +86,7 @@ export class AuthService {
       await this.mailService.sendVerificationEmail(existingUser.email, code);
 
       return {
-        message: 'Verification code sent again',
+        message: 'Overovací kód bol znovu poslaný',
         email: existingUser.email,
       };
     }
@@ -132,7 +132,7 @@ export class AuthService {
     await this.mailService.sendVerificationEmail(user.email, code);
 
     return {
-      message: 'Verification code sent',
+      message: 'Overovací kód bol poslaný',
       email: user.email,
     };
   }
@@ -144,11 +144,11 @@ export class AuthService {
   //   });
 
   //   if (!user) {
-  //     throw new UnauthorizedException('Invalid credentials');
+  //     throw new UnauthorizedException('Neplatné prihlasovacie údaje');
   //   }
 
   //   if (!user.isVerified) {
-  //     throw new UnauthorizedException('Please verify your email first');
+  //     throw new UnauthorizedException('Najprv si overte svoj e-mail');
   //   }
 
   //   const isPasswordValid = await bcrypt.compare(
@@ -157,7 +157,7 @@ export class AuthService {
   //   );
 
   //   if (!isPasswordValid) {
-  //     throw new UnauthorizedException('Invalid credentials');
+  //     throw new UnauthorizedException('Neplatné prihlasovacie údaje');
   //   }
 
   //   const payload = {
@@ -188,7 +188,7 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('Neplatné prihlasovacie údaje');
     }
 
     const isPasswordValid = await bcrypt.compare(
@@ -197,12 +197,12 @@ export class AuthService {
     );
 
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('Neplatné prihlasovacie údaje');
     }
 
     if (!user.isVerified) {
       throw new ForbiddenException({
-        message: 'Your email is not verified.',
+        message: 'Váš e-mail nie je overený.',
         code: 'EMAIL_NOT_VERIFIED',
         email: user.email,
       });
@@ -216,7 +216,7 @@ export class AuthService {
     const accessToken = await this.jwtService.signAsync(payload);
 
     return {
-      message: 'User logged in successfully',
+      message: 'Použivateš bol úspešne prihlásený',
       accessToken,
       user: {
         id: user.id,
@@ -232,7 +232,7 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new UnauthorizedException('User not found');
+      throw new UnauthorizedException('Používateľ nebol nájdený');
     }
 
     const isPasswordValid = await bcrypt.compare(
@@ -241,7 +241,7 @@ export class AuthService {
     );
 
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Current password is incorrect');
+      throw new UnauthorizedException('Aktuálne heslo je nesprávne');
     }
 
     const newPasswordHash = await bcrypt.hash(dto.newPassword, 10);
@@ -256,11 +256,11 @@ export class AuthService {
     try {
       await this.mailService.sendPasswordChangedEmail(user.email);
     } catch (error) {
-      console.error('Failed to send password changed email', error);
+      console.error('Nepodarilo sa odoslať e-mail o zmene hesla', error);
     }
 
     return {
-      message: 'Password changed successfully',
+      message: 'Heslo bolo úspešne zmenené',
     };
   }
 
@@ -277,7 +277,7 @@ export class AuthService {
     });
 
     return {
-      message: 'Name updated successfully',
+      message: 'Meno bolo úspešne zmenené',
       user,
     };
   }
@@ -290,7 +290,8 @@ export class AuthService {
     // Bezpečnostne v produkcii neprezrádzame, či email existuje.
     if (!user) {
       return {
-        message: 'If this email exists, a password reset link will be sent.',
+        message:
+          'Odkaz na obnovu hesla bol zaslaný na tento e-mail, ak existuje',
       };
     }
 
@@ -315,7 +316,7 @@ export class AuthService {
     await this.mailService.sendPasswordResetEmail(user.email, token);
 
     return {
-      message: 'Password reset email sent',
+      message: 'E-mail na obnovu hesla bol odoslaný',
     };
   }
 
@@ -326,7 +327,9 @@ export class AuthService {
     });
 
     if (!resetToken || resetToken.used || resetToken.expiresAt < new Date()) {
-      throw new BadRequestException('Invalid or expired reset token');
+      throw new BadRequestException(
+        'Neplatný alebo expirovaný token na obnovenie hesla',
+      );
     }
 
     const passwordHash = await bcrypt.hash(dto.newPassword, 10);
@@ -342,7 +345,7 @@ export class AuthService {
     });
 
     return {
-      message: 'Password reset successfully',
+      message: 'Heslo bolo úspešne obnovené',
     };
   }
 
@@ -352,7 +355,7 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Používateľ nebol nájdený');
     }
 
     const verification = await this.prisma.verificationCode.findUnique({
@@ -360,15 +363,15 @@ export class AuthService {
     });
 
     if (!verification) {
-      throw new BadRequestException('Verification code not found');
+      throw new BadRequestException('Overovací kód nebol nájdený');
     }
 
     if (verification.code !== dto.code) {
-      throw new BadRequestException('Invalid verification code');
+      throw new BadRequestException('Neplatný overovací kód');
     }
 
     if (verification.expiresAt < new Date()) {
-      throw new BadRequestException('Verification code expired');
+      throw new BadRequestException('Platnosť overovacieho kódu vypršala');
     }
     const verifiedUser = await this.prisma.user.update({
       where: { id: user.id },
@@ -387,7 +390,7 @@ export class AuthService {
     const accessToken = await this.jwtService.signAsync(payload);
 
     return {
-      message: 'Email verified successfully',
+      message: 'E-mail bol úspešne overený',
       accessToken,
       user: {
         id: verifiedUser.id,
@@ -407,11 +410,11 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Používateľ nebol nájdený');
     }
 
     if (user.isVerified) {
-      throw new BadRequestException('Email is already verified');
+      throw new BadRequestException('E-mail je už overený');
     }
 
     const code = this.generateVerificationCode();
@@ -434,7 +437,7 @@ export class AuthService {
     await this.mailService.sendVerificationEmail(user.email, code);
 
     return {
-      message: 'A new verification code has been sent.',
+      message: 'Nový overovací kód bol zaslaný na e-mailovú adresu',
       email: user.email,
     };
   }
@@ -443,7 +446,7 @@ export class AuthService {
     const user = await this.prisma.user.findUnique({ where: { id: userId } });
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Používateľ nebol nájdený');
     }
 
     await this.prisma.user.delete({
@@ -453,7 +456,7 @@ export class AuthService {
     });
 
     return {
-      message: 'User deleted.',
+      message: 'Použivateľ bol vymazaný',
     };
   }
 

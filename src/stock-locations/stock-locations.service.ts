@@ -52,7 +52,7 @@ export class StockLocationsService {
     });
 
     if (!location) {
-      throw new NotFoundException('Stock location not found');
+      throw new NotFoundException('Skladové miesto nebolo nájdené');
     }
 
     return location;
@@ -72,9 +72,7 @@ export class StockLocationsService {
     });
 
     if (existingLocation) {
-      throw new ConflictException(
-        'Stock location with this name already exists',
-      );
+      throw new ConflictException('Skladové miesto s týmto názvom už existuje');
     }
 
     const locationCount = await this.prisma.stockLocation.count({
@@ -119,7 +117,7 @@ export class StockLocationsService {
 
       if (existingLocation) {
         throw new ConflictException(
-          'Stock location with this name already exists',
+          'Skladové miesto s týmto názvom už existuje',
         );
       }
     }
@@ -165,7 +163,9 @@ export class StockLocationsService {
     const location = await this.findOne(userId, locationId);
 
     if (location.isDefault) {
-      throw new BadRequestException('Default stock location cannot be deleted');
+      throw new BadRequestException(
+        'Predvolené skladové miesto nie je možné odstrániť',
+      );
     }
 
     const stockCount = await this.prisma.userTabletStock.count({
@@ -177,7 +177,7 @@ export class StockLocationsService {
 
     if (stockCount > 0) {
       throw new BadRequestException(
-        'Stock location cannot be deleted because it contains products',
+        'Skladové miesto nie je možné odstrániť, pretože obsahuje produkty',
       );
     }
 
