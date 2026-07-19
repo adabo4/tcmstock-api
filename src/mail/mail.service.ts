@@ -1,5 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { Resend } from 'resend';
+import { passwordResetTemplate } from './templates/password-reset';
+import { verificationTemplate } from './templates/verification';
+import { passwordChangedTemplate } from './templates/password-changed';
 
 @Injectable()
 export class MailService {
@@ -14,11 +17,7 @@ export class MailService {
       from: 'noreply@tcm-api.mail.flights.home.sk',
       to: email,
       subject: 'Reset your password',
-      html: `
-      <p>Click the link below to reset your password:</p>
-      <a href="${resetLink}">Reset password</a>
-      <p>This link expires in 30 minutes.</p>
-    `,
+      html: passwordResetTemplate(resetLink),
     });
   }
 
@@ -28,15 +27,7 @@ export class MailService {
       from: 'noreply@tcm-api.mail.flights.home.sk',
       to: email,
       subject: 'Verify your account',
-      html: `
-       <h2>Welcome to TCM Stock</h2>
-
-      <p>Your verification code is:</p>
-
-      <h1>${code}</h1>
-
-      <p>This code expires in 15 minutes.</p>
-    `,
+      html: verificationTemplate(code),
     });
     console.log(result);
   }
@@ -46,15 +37,7 @@ export class MailService {
       from: 'noreply@tcm-api.mail.flights.home.sk',
       to: email,
       subject: 'Your password has been changed',
-      html: `
-      <h2>Password changed successfully</h2>
-
-      <p>Your TCM Stock account password has been changed.</p>
-
-      <p>If you made this change, no further action is required.</p>
-
-      <p><strong>If you did not change your password, please reset it immediately or contact support.</strong></p>
-    `,
+      html: passwordChangedTemplate(),
     });
   }
 }
