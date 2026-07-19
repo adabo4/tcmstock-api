@@ -4,6 +4,11 @@ import { ProductType } from '@prisma/client';
 import { Type } from 'class-transformer';
 import { IsEnum, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 
+export enum StockStatus {
+  LOW_STOCK = 'LOW_STOCK',
+  OUT_OF_STOCK = 'OUT_OF_STOCK',
+}
+
 export class MyStockQueryDto {
   @IsOptional()
   @IsString()
@@ -30,4 +35,8 @@ export class MyStockQueryDto {
   @Type(() => Number)
   @IsInt()
   stockLocationId?: number;
+
+  @IsOptional()
+  @IsEnum(StockStatus)
+  status?: StockStatus;
 }

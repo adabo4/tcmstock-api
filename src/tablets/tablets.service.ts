@@ -347,6 +347,7 @@ export class TabletsService {
   async findMyStock(userId: number, query: MyStockQueryDto) {
     const search = query.search?.trim() || null;
     const type = query.type ?? null;
+    const status = query.status ?? null;
     const page = query.page;
     const limit = query.limit;
     const offset = (page - 1) * limit;
@@ -386,62 +387,131 @@ export class TabletsService {
         };
       }>
     >`
-    SELECT
-      uts.id,
-      uts."userId",
-      uts."tabletCatalogId",
-      uts."fullQuantity",
-      uts."openedQuantity",
-      uts."createdAt",
-      uts."updatedAt",
-      json_build_object(
-        'id', tc.id,
-        'code', tc.code,
-        'name', tc.name,
-        'productType', tc."productType"
-      ) AS "tabletCatalog"
-    FROM user_tablet_stocks uts
-    INNER JOIN tablet_catalog tc
-      ON tc.id = uts."tabletCatalogId"
-    WHERE
-       uts."userId" = ${userId}
-       AND uts."stockLocationId" = ${stockLocation.id}
-      AND (
-        ${search}::text IS NULL
-        OR unaccent(lower(tc.name))
-          LIKE unaccent(lower(${`%${search ?? ''}%`}))
-        OR lower(tc.code)
-          LIKE lower(${`%${search ?? ''}%`})
+  SELECT
+    uts.id,
+    uts."userId",
+    uts."tabletCatalogId",
+    uts."fullQuantity",
+    uts."openedQuantity",
+    uts."createdAt",
+    uts."updatedAt",
+    json_build_object(
+      'id', tc.id,
+      'code', tc.code,
+      'name', tc.name,
+      'productType', tc."productType"
+    ) AS "tabletCatalog"
+
+  FROM user_tablet_stocks uts
+
+  INNER JOIN tablet_catalog tc
+    ON tc.id = uts."tabletCatalogId"
+
+  WHERE
+    uts."userId" = ${userId}
+    AND uts."stockLocationId" = ${stockLocation.id}
+
+    AND (
+      ${search}::text IS NULL
+      OR unaccent(lower(tc.name))
+        LIKE unaccent(lower(${`%${search ?? ''}%`}))
+      OR lower(tc.code)
+        LIKE lower(${`%${search ?? ''}%`})
+    )
+
+    AND (
+      ${type}::"ProductType" IS NULL
+      OR tc."productType" = ${type}::"ProductType"
+    )
+
+    AND (
+      ${status}::text IS NULL
+
+      OR (
+        ${status}::text = 'OUT_OF_STOCK'
+        AND (uts."fullQuantity" + uts."openedQuantity") = 0
       )
-      AND (
-        ${type}::"ProductType" IS NULL
-        OR tc."productType" = ${type}::"ProductType"
+
+      OR (
+        ${status}::text = 'LOW_STOCK'
+        AND (uts."fullQuantity" + uts."openedQuantity") > 0
+        AND (uts."fullQuantity" + uts."openedQuantity") < 2
       )
-    ORDER BY tc.code ASC
-    LIMIT ${limit}
-    OFFSET ${offset}
-  `;
+    )
+
+  ORDER BY tc.code ASC
+  LIMIT ${limit}
+  OFFSET ${offset}
+`;
 
     const countResult = await this.prisma.$queryRaw<Array<{ count: bigint }>>`
-    SELECT COUNT(*) AS count
-    FROM user_tablet_stocks uts
-    INNER JOIN tablet_catalog tc
-      ON tc.id = uts."tabletCatalogId"
-    WHERE
-       uts."userId" = ${userId}
-      AND uts."stockLocationId" = ${stockLocation.id}
-      AND (
-        ${search}::text IS NULL
-        OR unaccent(lower(tc.name))
-          LIKE unaccent(lower(${`%${search ?? ''}%`}))
-        OR lower(tc.code)
-          LIKE lower(${`%${search ?? ''}%`})
+  SELECT COUNT(*) AS count
+
+  FROM user_tablet_stocks uts
+
+  INNER JOIN tablet_catalog tc
+    ON tc.id = uts."tabletCatalogId"
+
+  WHERE
+    uts."userId" = ${userId}
+    AND uts."stockLocationId" = ${stockLocation.id}
+
+    AND (
+      ${search}::text IS NULL
+      OR unaccent(lower(tc.name))
+        LIKE unaccent(lower(${`%${search ?? ''}%`}))
+      OR lower(tc.code)
+        LIKE lower(${`%${search ?? ''}%`})
+    )
+
+    AND (
+      ${type}::"ProductType" IS NULL
+      OR tc."productType" = ${type}::"ProductType"
+    )
+
+    AND (
+      ${status}::text IS NULL
+
+      OR (
+        ${status}::text = 'OUT_OF_STOCK'
+        AND (uts."fullQuantity" + uts."openedQuantity") = 0
       )
-      AND (
-        ${type}::"ProductType" IS NULL
-        OR tc."productType" = ${type}::"ProductType"
+
+      OR (
+        ${status}::text = 'LOW_STOCK'
+        AND (uts."fullQuantity" + uts."openedQuantity") > 0
+        AND (uts."fullQuantity" + uts."openedQuantity") < 2
       )
-  `;
+    )
+`;
+
+    const summaryResult = await this.prisma.$queryRaw<
+      Array<{
+        totalProducts: bigint;
+        lowStock: bigint;
+        outOfStock: bigint;
+      }>
+    >`
+  SELECT
+    COUNT(*) AS "totalProducts",
+
+    COUNT(*) FILTER (
+      WHERE
+        (uts."fullQuantity" + uts."openedQuantity") > 0
+        AND (uts."fullQuantity" + uts."openedQuantity") < 2
+    ) AS "lowStock",
+
+    COUNT(*) FILTER (
+      WHERE
+        (uts."fullQuantity" + uts."openedQuantity") = 0
+    ) AS "outOfStock"
+
+  FROM user_tablet_stocks uts
+
+  WHERE
+    uts."userId" = ${userId}
+    AND uts."stockLocationId" = ${stockLocation.id}
+`;
 
     const total = Number(countResult[0]?.count ?? 0);
 
@@ -451,6 +521,11 @@ export class TabletsService {
       page,
       limit,
       totalPages: Math.ceil(total / limit),
+      summary: {
+        totalProducts: Number(summaryResult[0]?.totalProducts ?? 0),
+        lowStock: Number(summaryResult[0]?.lowStock ?? 0),
+        outOfStock: Number(summaryResult[0]?.outOfStock ?? 0),
+      },
     };
   }
 }
