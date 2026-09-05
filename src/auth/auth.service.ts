@@ -344,6 +344,12 @@ export class AuthService {
       data: { used: true },
     });
 
+    try {
+      await this.mailService.sendPasswordChangedEmail(resetToken.user.email);
+    } catch (error) {
+      console.error('Nepodarilo sa odoslať e-mail o obnovení hesla', error);
+    }
+
     return {
       message: 'Heslo bolo úspešne obnovené',
     };
