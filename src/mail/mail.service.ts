@@ -14,7 +14,7 @@ export class MailService {
     const resetLink = `${frontendUrl}/reset-password?token=${token}`;
 
     await this.resend.emails.send({
-      from: 'noreply@tcm-api.mail.flights.home.sk',
+      from: 'TCM Sklad <noreply@tcmsklad.sk>',
       to: email,
       subject: 'Obnovte svoje heslo',
       html: passwordResetTemplate(resetLink),
@@ -24,7 +24,7 @@ export class MailService {
   async sendVerificationEmail(email: string, code: string) {
     console.log('Sending verification email to:', email);
     const result = await this.resend.emails.send({
-      from: 'noreply@tcm-api.mail.flights.home.sk',
+      from: 'TCM Sklad <noreply@tcmsklad.sk>',
       to: email,
       subject: 'Overenie účtu pri registrácii',
       html: verificationTemplate(code),
@@ -34,7 +34,7 @@ export class MailService {
 
   async sendPasswordChangedEmail(email: string) {
     await this.resend.emails.send({
-      from: 'noreply@tcm-api.mail.flights.home.sk',
+      from: 'TCM Sklad <noreply@tcmsklad.sk>',
       to: email,
       subject: 'Vaše heslo bolo zmenené',
       html: passwordChangedTemplate(),
