@@ -54,6 +54,7 @@ model TabletCatalog {
   id          Int         @id @default(autoincrement())
   code        String      @unique
   name        String
+  czechName   String?
   productType ProductType @default(TABLET)
 
   userStocks UserTabletStock[]

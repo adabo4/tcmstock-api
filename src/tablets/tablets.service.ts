@@ -293,6 +293,7 @@ export class TabletsService {
         id: number;
         code: string;
         name: string;
+        czechName: string | null;
         productType: ProductType;
       }>
     >`
@@ -300,13 +301,18 @@ export class TabletsService {
       id,
       code,
       name,
+       "czechName",
       "productType"
     FROM tablet_catalog
     WHERE
       (
         ${search}::text IS NULL
-        OR unaccent(lower(name)) LIKE unaccent(lower(${`%${search ?? ''}%`}))
-        OR lower(code) LIKE lower(${`%${search ?? ''}%`})
+        OR unaccent(lower(name)) 
+          LIKE unaccent(lower(${`%${search ?? ''}%`}))
+        OR unaccent(lower(COALESCE("czechName", '')))
+           LIKE unaccent(lower(${`%${search ?? ''}%`}))
+        OR lower(code) 
+          LIKE lower(${`%${search ?? ''}%`})
       )
       AND (
         ${type}::"ProductType" IS NULL
@@ -323,8 +329,12 @@ export class TabletsService {
     WHERE
       (
         ${search}::text IS NULL
-        OR unaccent(lower(name)) LIKE unaccent(lower(${`%${search ?? ''}%`}))
-        OR lower(code) LIKE lower(${`%${search ?? ''}%`})
+        OR unaccent(lower(name)) 
+          LIKE unaccent(lower(${`%${search ?? ''}%`}))
+         OR unaccent(lower(COALESCE("czechName", '')))
+          LIKE unaccent(lower(${`%${search ?? ''}%`}))
+        OR lower(code) 
+          LIKE lower(${`%${search ?? ''}%`})
       )
       AND (
         ${type}::"ProductType" IS NULL
