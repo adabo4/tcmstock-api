@@ -29,113 +29,113 @@ export class AuthService {
     private readonly mailService: MailService,
   ) {}
 
-  async register(dto: RegisterDto) {
-    const normalizedEmail = dto.email.trim().toLowerCase();
+  // async register(dto: RegisterDto) {
+  //   if (dto.password !== dto.confirmPassword) {
+  //     throw new BadRequestException('Heslá sa nezhodujú');
+  //   }
 
-    const existingUser = await this.prisma.user.findUnique({
-      where: {
-        email: normalizedEmail,
-      },
-    });
+  //   const normalizedEmail = dto.email.trim().toLowerCase();
 
-    if (existingUser && existingUser.isVerified) {
-      throw new BadRequestException('Používateľ už existuje');
-    }
+  //   const existingUser = await this.prisma.user.findUnique({
+  //     where: {
+  //       email: normalizedEmail,
+  //     },
+  //   });
 
-    if (existingUser && existingUser.isVerified) {
-      throw new BadRequestException('Používateľ už existuje');
-    }
+  //   if (existingUser && existingUser.isVerified) {
+  //     throw new BadRequestException('Používateľ už existuje');
+  //   }
 
-    if (existingUser && !existingUser.isVerified) {
-      const code = this.generateVerificationCode();
-      const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+  //   if (existingUser && !existingUser.isVerified) {
+  //     const code = this.generateVerificationCode();
+  //     const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
 
-      await this.prisma.$transaction(async (tx) => {
-        const stockLocation = await tx.stockLocation.findFirst({
-          where: {
-            userId: existingUser.id,
-          },
-        });
+  //     await this.prisma.$transaction(async (tx) => {
+  //       const stockLocation = await tx.stockLocation.findFirst({
+  //         where: {
+  //           userId: existingUser.id,
+  //         },
+  //       });
 
-        if (!stockLocation) {
-          await tx.stockLocation.create({
-            data: {
-              name: 'Hlavný sklad',
-              isDefault: true,
-              userId: existingUser.id,
-            },
-          });
-        }
+  //       if (!stockLocation) {
+  //         await tx.stockLocation.create({
+  //           data: {
+  //             name: 'Hlavný sklad',
+  //             isDefault: true,
+  //             userId: existingUser.id,
+  //           },
+  //         });
+  //       }
 
-        await tx.verificationCode.upsert({
-          where: {
-            userId: existingUser.id,
-          },
-          update: {
-            code,
-            expiresAt,
-          },
-          create: {
-            code,
-            userId: existingUser.id,
-            expiresAt,
-          },
-        });
-      });
+  //       await tx.verificationCode.upsert({
+  //         where: {
+  //           userId: existingUser.id,
+  //         },
+  //         update: {
+  //           code,
+  //           expiresAt,
+  //         },
+  //         create: {
+  //           code,
+  //           userId: existingUser.id,
+  //           expiresAt,
+  //         },
+  //       });
+  //     });
 
-      await this.mailService.sendVerificationEmail(existingUser.email, code);
+  //     await this.mailService.sendVerificationEmail(existingUser.email, code);
 
-      return {
-        message: 'Overovací kód bol znovu poslaný',
-        email: existingUser.email,
-      };
-    }
+  //     return {
+  //       message: 'Overovací kód bol znovu poslaný',
+  //       email: existingUser.email,
+  //     };
+  //   }
 
-    const passwordHash = await bcrypt.hash(dto.password.trim(), 10);
-    const code = this.generateVerificationCode();
-    const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+  //   const passwordHash = await bcrypt.hash(dto.password.trim(), 10);
+  //   const code = this.generateVerificationCode();
+  //   const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
 
-    const user = await this.prisma.$transaction(async (tx) => {
-      const createdUser = await tx.user.create({
-        data: {
-          email: normalizedEmail,
-          passwordHash,
-          name: dto.name.trim(),
-        },
-        select: {
-          id: true,
-          email: true,
-          name: true,
-          createdAt: true,
-        },
-      });
+  //   const user = await this.prisma.$transaction(async (tx) => {
+  //     const createdUser = await tx.user.create({
+  //       data: {
+  //         email: normalizedEmail,
+  //         passwordHash,
+  //         name: dto.name?.trim(),
+  //       },
+  //       select: {
+  //         id: true,
+  //         email: true,
+  //         name: true,
+  //         createdAt: true,
+  //       },
+  //     });
 
-      await tx.stockLocation.create({
-        data: {
-          name: 'Hlavný sklad',
-          isDefault: true,
-          userId: createdUser.id,
-        },
-      });
+  //     await tx.stockLocation.create({
+  //       data: {
+  //         name: 'Hlavný sklad',
+  //         isDefault: true,
+  //         userId: createdUser.id,
+  //       },
+  //     });
 
-      await tx.verificationCode.create({
-        data: {
-          code,
-          userId: createdUser.id,
-          expiresAt,
-        },
-      });
+  //     await tx.verificationCode.create({
+  //       data: {
+  //         code,
+  //         userId: createdUser.id,
+  //         expiresAt,
+  //       },
+  //     });
 
-      return createdUser;
-    });
+  //     return createdUser;
+  //   });
 
-    await this.mailService.sendVerificationEmail(user.email, code);
+  //   await this.mailService.sendVerificationEmail(user.email, code);
 
-    return {
-      message: 'Overovací kód bol poslaný',
-      email: user.email,
-    };
-  }
+  //   return {
+  //     message: 'Overovací kód bol poslaný',
+  //     email: user.email,
+  //   };
+  // }
   // async login(dto: LoginDto) {
   //   const user = await this.prisma.user.findUnique({
   //     where: {
@@ -177,6 +177,123 @@ export class AuthService {
   //     },
   //   };
   // }
+
+  async register(dto: RegisterDto) {
+    if (dto.password !== dto.confirmPassword) {
+      throw new BadRequestException('Heslá sa nezhodujú');
+    }
+
+    const normalizedEmail = dto.email.trim().toLowerCase();
+    const passwordHash = await bcrypt.hash(dto.password.trim(), 10);
+
+    const existingUser = await this.prisma.user.findUnique({
+      where: {
+        email: normalizedEmail,
+      },
+    });
+
+    if (existingUser?.isVerified) {
+      throw new BadRequestException('Používateľ už existuje');
+    }
+
+    const code = this.generateVerificationCode();
+    const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+    if (existingUser && !existingUser.isVerified) {
+      await this.prisma.$transaction(async (tx) => {
+        await tx.user.update({
+          where: {
+            id: existingUser.id,
+          },
+          data: {
+            passwordHash,
+            ...(dto.name !== undefined && {
+              name: dto.name.trim(),
+            }),
+          },
+        });
+
+        const stockLocation = await tx.stockLocation.findFirst({
+          where: {
+            userId: existingUser.id,
+          },
+        });
+
+        if (!stockLocation) {
+          await tx.stockLocation.create({
+            data: {
+              name: 'Hlavný sklad',
+              isDefault: true,
+              userId: existingUser.id,
+            },
+          });
+        }
+
+        await tx.verificationCode.upsert({
+          where: {
+            userId: existingUser.id,
+          },
+          update: {
+            code,
+            expiresAt,
+          },
+          create: {
+            code,
+            userId: existingUser.id,
+            expiresAt,
+          },
+        });
+      });
+
+      await this.mailService.sendVerificationEmail(existingUser.email, code);
+
+      return {
+        message: 'Overovací kód bol znovu poslaný',
+        email: existingUser.email,
+      };
+    }
+
+    const user = await this.prisma.$transaction(async (tx) => {
+      const createdUser = await tx.user.create({
+        data: {
+          email: normalizedEmail,
+          passwordHash,
+          name: dto.name?.trim(),
+        },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          createdAt: true,
+        },
+      });
+
+      await tx.stockLocation.create({
+        data: {
+          name: 'Hlavný sklad',
+          isDefault: true,
+          userId: createdUser.id,
+        },
+      });
+
+      await tx.verificationCode.create({
+        data: {
+          code,
+          userId: createdUser.id,
+          expiresAt,
+        },
+      });
+
+      return createdUser;
+    });
+
+    await this.mailService.sendVerificationEmail(user.email, code);
+
+    return {
+      message: 'Overovací kód bol poslaný',
+      email: user.email,
+    };
+  }
 
   async login(dto: LoginDto) {
     const normalizedEmail = dto.email.trim().toLowerCase();
